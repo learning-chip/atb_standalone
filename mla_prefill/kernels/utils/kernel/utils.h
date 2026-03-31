@@ -10,13 +10,6 @@
 #ifndef INCLUDE_UTILS_H
 #define INCLUDE_UTILS_H
 
-template <typename IN_DTYPE>
-__aicore__ inline void SetVectorMask(const uint64_t maskHigh, const uint64_t maskLow)
-{
-    (void)sizeof(IN_DTYPE);
-    set_vector_mask(maskHigh, maskLow);
-}
-
 template <pipe_t pipe, uint8_t mode>
 __aicore__ inline void FftsCrossCoreSync(uint16_t flagId)
 {

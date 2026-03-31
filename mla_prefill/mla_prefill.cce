@@ -58,6 +58,10 @@ struct LocalTensorView {
     {
         return LocalTensorView<U>(addr);
     }
+    __aicore__ inline operator __ubuf__ T*() const
+    {
+        return (__ubuf__ T*)addr;
+    }
 };
 
 template <typename T>
@@ -828,11 +832,11 @@ __aicore__ __attribute__((always_inline)) inline void __set_mask(int32_t len)
     }
 
     if (len == VECTOR_SIZE || len == 0) {
-        SetVectorMask<int8_t>((uint64_t)-1, (uint64_t)-1);
+        set_vector_mask((uint64_t)-1, (uint64_t)-1);
     } else if (len >= FLOAT_VECTOR_SIZE) {
-        SetVectorMask<int8_t>(mask, (uint64_t)-1);
+        set_vector_mask(mask, (uint64_t)-1);
     } else {
-        SetVectorMask<int8_t>(0x0, mask);
+        set_vector_mask(0x0, mask);
     }
 }
 
@@ -995,7 +999,7 @@ __aicore__ __attribute__((always_inline)) void OnlineSoftmaxStage1FP16(
             8          // srcRepeatStride
         );
     }
-    SetVectorMask<int8_t>((uint64_t)-1, (uint64_t)-1);
+    set_vector_mask((uint64_t)-1, (uint64_t)-1);
     PIPE_BARRIER(V);
     // *** gm = hm
     ub_to_ub_raw<S_DTYPE>(global_rowmax_ub, hat_rowmax_ub, round_m / BLOCK_SIZE);
@@ -1037,7 +1041,7 @@ __aicore__ __attribute__((always_inline)) void OnlineSoftmaxStage1FP16(
             n_stride / BLOCK_SIZE, // src0RepeatStride
             1                              // src1RepeatStride
         );
-        SetVectorMask<int8_t>((uint64_t)-1, (uint64_t)-1);
+        set_vector_mask((uint64_t)-1, (uint64_t)-1);
     }
     PIPE_BARRIER(V);
 
@@ -1135,7 +1139,7 @@ __aicore__ __attribute__((always_inline)) void OnlineSoftmaxStage1FP16(
             8          // src1RepeatStride
         );
         PIPE_BARRIER(V);
-        SetVectorMask<int8_t>((uint64_t)-1, (uint64_t)-1);
+        set_vector_mask((uint64_t)-1, (uint64_t)-1);
     }
 }
 
@@ -1156,7 +1160,7 @@ public:
         set_ffts_base_addr((unsigned long)sync);
         set_atomic_none();
         set_mask_norm();
-        SetVectorMask<int8_t>((uint64_t)-1, (uint64_t)-1);
+        set_vector_mask((uint64_t)-1, (uint64_t)-1);
 
         this->sub_block_idx = get_subblockid();
         this->batch_size = (uint32_t)(*((__gm__ int32_t *)tiling_para_gm));
@@ -1455,7 +1459,7 @@ public:
                                 qk_round_k / FLOAT_BLOCK_SIZE, // src0RepeatStride
                                 1                           // src1RepeatStride
                             );
-                            SetVectorMask<int8_t>((uint64_t)-1, (uint64_t)-1);
+                            set_vector_mask((uint64_t)-1, (uint64_t)-1);
                         }
                         PIPE_BARRIER(V);
                     }
@@ -1538,7 +1542,7 @@ public:
                                 qk_round_k / FLOAT_BLOCK_SIZE, // src0RepeatStride
                                 1                           // src1RepeatStride
                             );
-                            SetVectorMask<int8_t>((uint64_t)-1, (uint64_t)-1);
+                            set_vector_mask((uint64_t)-1, (uint64_t)-1);
                         }
                         PIPE_BARRIER(V);
                         for (uint32_t ms_idx = 0; ms_idx < loop_m; ms_idx++){
