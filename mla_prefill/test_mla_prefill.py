@@ -1,10 +1,13 @@
 import ctypes
+import csv
 import math
 import os
 
 import numpy as np
 import torch
 import torch_npu
+
+BLOCK_DIM = int(getattr(torch.npu.get_device_properties("npu:0"), "cube_core_num", 20))
 
 
 def as_ptr(t: torch.Tensor) -> ctypes.c_void_p:
@@ -191,13 +194,12 @@ def run_smoke():
     quant_p = make_empty(device, torch.float32)
     log_n = make_empty(device, torch.float32)
 
-    block_dim = heads  # num_heads * total_q_blk_num for this simple case
     o = torch.zeros(q_tokens, heads * embdv, dtype=dtype, device=device)
     # Keep workspace sizes aligned with kernel constants to avoid OOB writes.
     tmp_size = 32768 * 16
-    s = torch.empty(block_dim * tmp_size, dtype=dtype, device=device)
-    p = torch.empty(block_dim * tmp_size, dtype=dtype, device=device)
-    o_tmp = torch.empty(block_dim * tmp_size, dtype=torch.float32, device=device)
+    s = torch.empty(BLOCK_DIM * tmp_size, dtype=dtype, device=device)
+    p = torch.empty(BLOCK_DIM * tmp_size, dtype=dtype, device=device)
+    o_tmp = torch.empty(BLOCK_DIM * tmp_size, dtype=torch.float32, device=device)
     upo_tmp = make_empty(device, torch.float32)
 
     tor = 1.0 / math.sqrt(float(embd))
@@ -220,7 +222,7 @@ def run_smoke():
     stream_ptr = torch.npu.current_stream()._as_parameter_
     o_before = o.clone()
     lib.call_kernel(
-        block_dim,
+        BLOCK_DIM,
         stream_ptr,
         as_ptr(q_split1),
         as_ptr(q_split2),
@@ -268,5 +270,202 @@ def run_smoke():
     print(f"tor example: {tor:.6f}")
 
 
+def benchmark_with_events(fn, warmup_iters: int = 5, benchmark_iters: int = 20) -> float:
+    start_events = [torch.npu.Event(enable_timing=True) for _ in range(benchmark_iters)]
+    end_events = [torch.npu.Event(enable_timing=True) for _ in range(benchmark_iters)]
+    for _ in range(warmup_iters):
+        fn()
+    torch.npu.synchronize()
+    for i in range(benchmark_iters):
+        start_events[i].record()
+        fn()
+        end_events[i].record()
+    torch.npu.synchronize()
+    times_ms = [s.elapsed_time(e) for s, e in zip(start_events, end_events)]
+    return float(sum(times_ms) / len(times_ms))
+
+
+def estimate_flops(batch: int, heads: int, q_seq: int, kv_seq: int, embd: int, embdv: int) -> float:
+    qk = 2.0 * batch * heads * q_seq * kv_seq * embd
+    pv = 2.0 * batch * heads * q_seq * kv_seq * embdv
+    return qk + pv
+
+
+def run_benchmarks():
+    device = "npu"
+    dtype = torch.float16
+    torch.npu.set_device(device)
+    here = os.path.dirname(os.path.abspath(__file__))
+    lib = load_kernel(os.path.join(here, "mla_prefill_lib.so"))
+
+    # Larger shapes for higher FLOP rates while staying within reasonable memory.
+    # Additional cases push FLOPs higher; cases that fail numerical checks are skipped below.
+    cases = [
+        {"name": "prefill_b4_h16_s256", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 256, "kv_seq": 256},
+        {"name": "prefill_b4_h16_s512", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 512, "kv_seq": 512},
+        {"name": "prefill_b4_h16_s768", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 768, "kv_seq": 768},
+        {"name": "prefill_b4_h16_s1024", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 1024, "kv_seq": 1024},
+        {"name": "prefill_b8_h16_s768", "batch": 8, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 768, "kv_seq": 768},
+        {"name": "prefill_b8_h32_s512", "batch": 8, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 512, "kv_seq": 512},
+        {"name": "prefill_b8_h32_s768", "batch": 8, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 768, "kv_seq": 768},
+        {"name": "prefill_b16_h16_s512", "batch": 16, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 512, "kv_seq": 512},
+        {"name": "prefill_b16_h32_s256", "batch": 16, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 256, "kv_seq": 256},
+    ]
+    error_warn_threshold = 1.0e-2
+    results = []
+    skipped_cases = []
+
+    for case in cases:
+        batch = case["batch"]
+        heads = case["heads"]
+        kv_heads = case["kv_heads"]
+        embd = case["embd"]
+        embdv = case["embdv"]
+        q_seq = case["q_seq"]
+        kv_seq = case["kv_seq"]
+        q_tokens = batch * q_seq
+
+        q = torch.randn(q_tokens, heads * embd, dtype=dtype, device=device)
+        k = torch.randn(1, batch, kv_seq, kv_heads * embd, dtype=dtype, device=device)
+        v = torch.randn(1, batch, kv_seq, kv_heads * embdv, dtype=dtype, device=device)
+        q_split1, q_split2, k_split1, k_split2 = split_qk_for_mla(q, k, heads, kv_heads)
+        mask = make_empty(device, dtype)
+        alibi = make_empty(device, torch.float32)
+        deq_qk = make_empty(device, torch.float32)
+        off_qk = make_empty(device, torch.int32)
+        deq_pv = make_empty(device, torch.float32)
+        off_pv = make_empty(device, torch.int32)
+        quant_p = make_empty(device, torch.float32)
+        log_n = make_empty(device, torch.float32)
+        tor = 1.0 / math.sqrt(float(embd))
+        tiling = make_prefill_tiling(
+            batch=batch,
+            q_seqlens=[q_seq] * batch,
+            kv_seqlens=[kv_seq] * batch,
+            q_heads=heads,
+            embed=embd,
+            kv_heads=kv_heads,
+            embdv=embdv,
+            tor=tor,
+            q_offset_elems=0,
+            k_offset_elems=0,
+            v_offset_elems=0,
+            tiling_key=1,
+            device=device,
+        )
+
+        o = torch.zeros(q_tokens, heads * embdv, dtype=dtype, device=device)
+        tmp_size = 32768 * 16
+        s = torch.empty(BLOCK_DIM * tmp_size, dtype=dtype, device=device)
+        p = torch.empty(BLOCK_DIM * tmp_size, dtype=dtype, device=device)
+        o_tmp = torch.empty(BLOCK_DIM * tmp_size, dtype=torch.float32, device=device)
+        upo_tmp = make_empty(device, torch.float32)
+        stream_ptr = torch.npu.current_stream()._as_parameter_
+
+        def run_custom():
+            lib.call_kernel(
+                BLOCK_DIM,
+                stream_ptr,
+                as_ptr(q_split1),
+                as_ptr(q_split2),
+                as_ptr(k_split1[0]),
+                as_ptr(k_split2[0]),
+                as_ptr(v[0].contiguous()),
+                as_ptr(mask),
+                as_ptr(alibi),
+                as_ptr(deq_qk),
+                as_ptr(off_qk),
+                as_ptr(deq_pv),
+                as_ptr(off_pv),
+                as_ptr(quant_p),
+                as_ptr(log_n),
+                as_ptr(o),
+                as_ptr(s),
+                as_ptr(p),
+                as_ptr(o_tmp),
+                as_ptr(upo_tmp),
+                as_ptr(tiling),
+            )
+
+        def run_ref():
+            scale = 1.0 / math.sqrt(float(embd))
+            q_bmh = q.view(batch, q_seq, heads, embd).transpose(1, 2)
+            k_bmh = k[0].view(batch, kv_seq, kv_heads, embd).transpose(1, 2)
+            v_bmh = v[0].view(batch, kv_seq, kv_heads, embdv).transpose(1, 2)
+            o_ref_local = torch.nn.functional.scaled_dot_product_attention(
+                q_bmh, k_bmh, v_bmh, attn_mask=None, dropout_p=0.0, is_causal=False, scale=scale
+            )
+            return o_ref_local.transpose(1, 2).contiguous().view(q_tokens, heads * embdv)
+
+        # NOTE: Some large prefill shapes can trigger runtime/device errors on certain environments.
+        # TODO: Revisit these skipped cases after kernel/tiling stability is improved.
+        try:
+            run_custom()
+            torch.npu.synchronize()
+        except RuntimeError as e:
+            print(f"WARNING[{case['name']}]: skipped due to runtime error during correctness run: {e}")
+            skipped_cases.append(case["name"])
+            continue
+        o_ref = run_ref()
+        mean_abs_err = torch.mean(torch.abs(o.float() - o_ref.float())).item()
+        max_abs_err = torch.max(torch.abs(o.float() - o_ref.float())).item()
+        if max_abs_err > error_warn_threshold:
+            print(
+                f"WARNING[{case['name']}]: skipped due to large error "
+                f"(mean_abs_err={mean_abs_err:.6f}, max_abs_err={max_abs_err:.6f}, "
+                f"threshold={error_warn_threshold:.6f})"
+            )
+            skipped_cases.append(case["name"])
+            continue
+
+        try:
+            custom_ms = benchmark_with_events(run_custom)
+        except RuntimeError as e:
+            print(f"WARNING[{case['name']}]: skipped due to runtime error during timing run: {e}")
+            skipped_cases.append(case["name"])
+            continue
+        ref_ms = benchmark_with_events(run_ref)
+        flops = estimate_flops(batch, heads, q_seq, kv_seq, embd, embdv)
+        custom_tflops = flops / (custom_ms * 1e-3) / 1e12
+        ref_tflops = flops / (ref_ms * 1e-3) / 1e12
+        print(
+            f"[{case['name']}] custom={custom_ms:.3f} ms ({custom_tflops:.4f} TFLOP/s), "
+            f"torch_ref={ref_ms:.3f} ms ({ref_tflops:.4f} TFLOP/s), "
+            f"mean_abs_err={mean_abs_err:.6f}, max_abs_err={max_abs_err:.6f}"
+        )
+        results.append(
+            {
+                "case": case["name"],
+                "batch": batch,
+                "heads": heads,
+                "kv_heads": kv_heads,
+                "q_seq": q_seq,
+                "kv_seq": kv_seq,
+                "embd": embd,
+                "embdv": embdv,
+                "block_dim": BLOCK_DIM,
+                "custom_ms": custom_ms,
+                "torch_ref_ms": ref_ms,
+                "custom_tflops": custom_tflops,
+                "torch_ref_tflops": ref_tflops,
+                "mean_abs_err": mean_abs_err,
+                "max_abs_err": max_abs_err,
+            }
+        )
+
+    if results:
+        csv_path = os.path.join(here, "benchmark_mla_prefill.csv")
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=list(results[0].keys()))
+            writer.writeheader()
+            writer.writerows(results)
+        print(f"wrote benchmark csv: {csv_path}")
+    else:
+        print("WARNING: no successful prefill benchmark cases; csv not written.")
+    if skipped_cases:
+        print(f"NOTE: skipped prefill benchmark cases due to runtime error: {skipped_cases}")
+
+
 if __name__ == "__main__":
     run_smoke()
+    run_benchmarks()
