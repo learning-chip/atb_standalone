@@ -11,109 +11,53 @@
 #define INCLUDE_MEM_H
 
 #include "hardware.h"
-#include "kernel_event.h"
-#include "kernel_tensor.h"
 
 enum class BufferType { ASCEND_UB, ASCEND_CB, ASCEND_L0A, ASCEND_L0B, ASCEND_L0C, ASCEND_MAX };
 
-template <BufferType BufferType_>
-__aicore__ constexpr AscendC::TPosition GetPosition()
+template <typename T>
+struct RawTensorView {
+    uint64_t addr{0};
+    __aicore__ RawTensorView() = default;
+    __aicore__ explicit RawTensorView(uint64_t in) : addr(in) {}
+    __aicore__ inline uint64_t GetPhyAddr() const { return addr; }
+    __aicore__ inline RawTensorView<T> operator[](uint64_t offset) const
+    {
+        return RawTensorView<T>(addr + offset * sizeof(T));
+    }
+    template <typename U>
+    __aicore__ inline RawTensorView<U> ReinterpretCast() const
+    {
+        return RawTensorView<U>(addr);
+    }
+};
+
+template <BufferType BufferType_, typename DstDataType>
+__aicore__ inline RawTensorView<DstDataType> MakeRawBuffer(const uint32_t offset)
 {
     if constexpr (BufferType_ == BufferType::ASCEND_UB) {
-        return AscendC::TPosition::VECIN;
+        return RawTensorView<DstDataType>((uint64_t)reinterpret_cast<__ubuf__ uint8_t *>((uintptr_t)offset));
     } else if constexpr (BufferType_ == BufferType::ASCEND_CB) {
-        return AscendC::TPosition::A1;
+        return RawTensorView<DstDataType>((uint64_t)reinterpret_cast<__cbuf__ uint8_t *>((uintptr_t)offset));
     } else if constexpr (BufferType_ == BufferType::ASCEND_L0A) {
-        return AscendC::TPosition::A2;
+        return RawTensorView<DstDataType>((uint64_t)reinterpret_cast<__ca__ uint8_t *>((uintptr_t)offset));
     } else if constexpr (BufferType_ == BufferType::ASCEND_L0B) {
-        return AscendC::TPosition::B2;
+        return RawTensorView<DstDataType>((uint64_t)reinterpret_cast<__cb__ uint8_t *>((uintptr_t)offset));
     } else if constexpr (BufferType_ == BufferType::ASCEND_L0C) {
-        return AscendC::TPosition::CO1;
+        return RawTensorView<DstDataType>((uint64_t)reinterpret_cast<__cc__ uint8_t *>((uintptr_t)offset));
     }
-    return AscendC::TPosition::GM;
+    return RawTensorView<DstDataType>(0);
 }
 
 template <ArchType ArchTag>
 struct AsdopsBuffer {
 public:
-    __aicore__ AsdopsBuffer()
-    {
-        constexpr uint32_t bufferSize[(uint32_t)BufferType::ASCEND_MAX] = {HardwareInfo<ArchTag>::ubSize,
-                                                                           HardwareInfo<ArchTag>::l1Size,
-                                                                           HardwareInfo<ArchTag>::l0ASize,
-                                                                           HardwareInfo<ArchTag>::l0BSize,
-                                                                           HardwareInfo<ArchTag>::l0CSize};
-#ifdef __DAV_C220_VEC__
-        AscendC::TBuffAddr ubAddr{};
-        ubAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::VECIN);
-        ubAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_UB];
-        ubAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_UB].SetAddr(ubAddr);
-#elif defined(__DAV_C220_CUBE__)
-        AscendC::TBuffAddr cbAddr{};
-        cbAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::A1);
-        cbAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_CB];
-        cbAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_CB].SetAddr(cbAddr);
-
-        AscendC::TBuffAddr l0aAddr{};
-        l0aAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::A2);
-        l0aAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_L0A];
-        l0aAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_L0A].SetAddr(l0aAddr);
-
-        AscendC::TBuffAddr l0bAddr{};
-        l0bAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::B2);
-        l0bAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_L0B];
-        l0bAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_L0B].SetAddr(l0bAddr);
-
-        AscendC::TBuffAddr l0cAddr{};
-        l0cAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::CO1);
-        l0cAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_L0C];
-        l0cAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_L0C].SetAddr(l0cAddr);
-#else
-        AscendC::TBuffAddr ubAddr{};
-        ubAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::VECIN);
-        ubAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_UB];
-        ubAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_UB].SetAddr(ubAddr);
-
-        AscendC::TBuffAddr cbAddr{};
-        cbAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::A1);
-        cbAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_CB];
-        cbAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_CB].SetAddr(cbAddr);
-
-        AscendC::TBuffAddr l0aAddr{};
-        l0aAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::A2);
-        l0aAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_L0A];
-        l0aAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_L0A].SetAddr(l0aAddr);
-
-        AscendC::TBuffAddr l0bAddr{};
-        l0bAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::B2);
-        l0bAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_L0B];
-        l0bAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_L0B].SetAddr(l0bAddr);
-
-        AscendC::TBuffAddr l0cAddr{};
-        l0cAddr.logicPos = static_cast<uint8_t>(AscendC::TPosition::CO1);
-        l0cAddr.dataLen = bufferSize[(uint32_t)BufferType::ASCEND_L0C];
-        l0cAddr.bufferHandle = 0;
-        tensor[(uint32_t)BufferType::ASCEND_L0C].SetAddr(l0cAddr);
-#endif
-    };
+    __aicore__ AsdopsBuffer() {};
 
     template <BufferType BufferType_, typename DstDataType = half>
-    __aicore__ AscendC::LocalTensor<DstDataType> GetBuffer(const uint32_t offset) const
+    __aicore__ RawTensorView<DstDataType> GetBuffer(const uint32_t offset) const
     {
-        return tensor[(uint32_t)BufferType_][offset].template ReinterpretCast<DstDataType>();
+        return MakeRawBuffer<BufferType_, DstDataType>(offset);
     }
-
-public:
-    AscendC::LocalTensor<uint8_t> tensor[(uint32_t)BufferType::ASCEND_MAX];
 };
 
 #endif

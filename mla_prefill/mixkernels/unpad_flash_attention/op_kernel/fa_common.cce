@@ -55,27 +55,13 @@ enum class MaskType {
 
 template <typename T>
 __aicore__ __attribute__((always_inline)) inline void ub_to_ub_raw(
-    const AscendC::LocalTensor<T> &dst, const AscendC::LocalTensor<T> &src, uint32_t len_burst)
+    const LocalTensorView<T> &dst, const LocalTensorView<T> &src, uint32_t len_burst)
 {
     copy_ubuf_to_ubuf(
         (__ubuf__ T *)dst.GetPhyAddr(), (__ubuf__ T *)src.GetPhyAddr(), 0, 1, len_burst, 0, 0);
 }
 
-template <typename T>
-__aicore__ __attribute__((always_inline)) inline void gm_to_ub_raw(
-    const AscendC::LocalTensor<T> &dst, __gm__ T *src, uint32_t n_burst, uint32_t len_burst)
-{
-    copy_gm_to_ubuf(
-        (__ubuf__ T *)dst.GetPhyAddr(), src, 0, n_burst, len_burst, 0, 0);
-}
-
-template <typename T>
-__aicore__ __attribute__((always_inline)) inline void ub_to_gm_raw(
-    __gm__ T *dst, const AscendC::LocalTensor<T> &src, uint32_t n_burst, uint32_t len_burst)
-{
-    copy_ubuf_to_gm(
-        dst, (__ubuf__ T *)src.GetPhyAddr(), 0, n_burst, len_burst, 0, 0);
-}
+// gm_to_ub_raw / ub_to_gm_raw are provided by mla_prefill.cce
 
 __aicore__ __attribute__((always_inline)) inline void SetVecMask(int32_t len)
 {
@@ -95,7 +81,7 @@ __aicore__ __attribute__((always_inline)) inline void SetVecMask(int32_t len)
     }
 }
 
-__aicore__ __attribute__((always_inline)) inline void GenMaskMatrix(AscendC::LocalTensor<float> mask_tensor, 
+__aicore__ __attribute__((always_inline)) inline void GenMaskMatrix(LocalTensorView<float> mask_tensor, 
                                                                     float mask_coff) 
 {
     // Format ND 32 * 32 MaskMatrix
@@ -152,18 +138,18 @@ __aicore__ __attribute__((always_inline)) inline void SetBlockReduceMask(int32_t
 template<typename T, RowCalcTile TILE_MODE>
 struct Rowsum {
     __aicore__ __attribute__((always_inline)) inline Rowsum(
-        const AscendC::LocalTensor<T> &src_ub,
-        const AscendC::LocalTensor<T> &rowsum_ub,
-        const AscendC::LocalTensor<T> &tmp_ub,
+        const LocalTensorView<T> &src_ub,
+        const LocalTensorView<T> &rowsum_ub,
+        const LocalTensorView<T> &tmp_ub,
         uint32_t num_rows_round, uint32_t num_elems, uint32_t num_elems_aligned);
 };
 
 template<typename T, RowCalcTile TILE_MODE>
 struct Rowmax {
     __aicore__ __attribute__((always_inline)) inline Rowmax(
-        const AscendC::LocalTensor<T> &src_ub,
-        const AscendC::LocalTensor<T> &rowmax_ub,
-        const AscendC::LocalTensor<T> &tmp_ub,
+        const LocalTensorView<T> &src_ub,
+        const LocalTensorView<T> &rowmax_ub,
+        const LocalTensorView<T> &tmp_ub,
         uint32_t num_rows_round, uint32_t num_elems, uint32_t num_elems_aligned);
 };
 
@@ -171,18 +157,18 @@ struct Rowmax {
 template<typename S_DTYPE, typename EXP_DTYPE, typename P_DTYPE, typename MASK_DTYPE, MaskType MASK_TYPE>
 struct OnlineSoftmaxStage1 {
     __aicore__ __attribute__((always_inline)) inline OnlineSoftmaxStage1(
-        const AscendC::LocalTensor<S_DTYPE> &s_ub,
-        const AscendC::LocalTensor<MASK_DTYPE> &mask_orig_ub,
-        const AscendC::LocalTensor<S_DTYPE> &mask_processed_ub,
-        const AscendC::LocalTensor<S_DTYPE> &local_rowmax_ub,
-        const AscendC::LocalTensor<S_DTYPE> &hat_rowmax_ub,
-        const AscendC::LocalTensor<S_DTYPE> &global_rowmax_ub,
-        const AscendC::LocalTensor<S_DTYPE> &diff_rowmax_ub,
-        const AscendC::LocalTensor<EXP_DTYPE> &s_exp_ub,
-        const AscendC::LocalTensor<EXP_DTYPE> &local_rowsum_ub,
-        const AscendC::LocalTensor<EXP_DTYPE> &global_rowsum_ub,
-        const AscendC::LocalTensor<P_DTYPE> &p_ub,
-        const AscendC::LocalTensor<EXP_DTYPE> &tmp_ub,
+        const LocalTensorView<S_DTYPE> &s_ub,
+        const LocalTensorView<MASK_DTYPE> &mask_orig_ub,
+        const LocalTensorView<S_DTYPE> &mask_processed_ub,
+        const LocalTensorView<S_DTYPE> &local_rowmax_ub,
+        const LocalTensorView<S_DTYPE> &hat_rowmax_ub,
+        const LocalTensorView<S_DTYPE> &global_rowmax_ub,
+        const LocalTensorView<S_DTYPE> &diff_rowmax_ub,
+        const LocalTensorView<EXP_DTYPE> &s_exp_ub,
+        const LocalTensorView<EXP_DTYPE> &local_rowsum_ub,
+        const LocalTensorView<EXP_DTYPE> &global_rowsum_ub,
+        const LocalTensorView<P_DTYPE> &p_ub,
+        const LocalTensorView<EXP_DTYPE> &tmp_ub,
         __gm__ S_DTYPE *s_gm,
         __gm__ P_DTYPE *p_gm,
         bool first_n_iter, S_DTYPE tor,
@@ -218,9 +204,9 @@ __aicore__ __attribute__((always_inline)) inline void SetBlockReduceMask<half>(i
 template<>
 struct Rowmax<half, RowCalcTile::SPEC_TILE_512> {
     __aicore__ __attribute__((always_inline)) Rowmax(
-        const AscendC::LocalTensor<half> &s_ub,
-        const AscendC::LocalTensor<half> &local_rowmax_ub,
-        const AscendC::LocalTensor<half> &tmp_ub,
+        const LocalTensorView<half> &s_ub,
+        const LocalTensorView<half> &local_rowmax_ub,
+        const LocalTensorView<half> &tmp_ub,
         uint32_t m, uint32_t n_real, uint32_t n_stride)
     {
         cgmax_v<ArchType::ASCEND_V220, half>(
@@ -260,9 +246,9 @@ struct Rowmax<half, RowCalcTile::SPEC_TILE_512> {
 template<>
 struct Rowmax<half, RowCalcTile::SPEC_TILE_256>{
     __aicore__ __attribute__((always_inline)) Rowmax(
-        const AscendC::LocalTensor<half> &s_ub,
-        const AscendC::LocalTensor<half> &local_rowmax_ub,
-        const AscendC::LocalTensor<half> &tmp_ub,
+        const LocalTensorView<half> &s_ub,
+        const LocalTensorView<half> &local_rowmax_ub,
+        const LocalTensorView<half> &tmp_ub,
         uint32_t m, uint32_t n_real, uint32_t n_stride)
     {
         cgmax_v<ArchType::ASCEND_V220, half>(
@@ -289,9 +275,9 @@ struct Rowmax<half, RowCalcTile::SPEC_TILE_256>{
 template<>
 struct Rowmax<half, RowCalcTile::TAIL_TILE>{
     __aicore__ __attribute__((always_inline)) Rowmax(
-        const AscendC::LocalTensor<half> &s_ub,
-        const AscendC::LocalTensor<half> &local_rowmax_ub,
-        const AscendC::LocalTensor<half> &tmp_ub,
+        const LocalTensorView<half> &s_ub,
+        const LocalTensorView<half> &local_rowmax_ub,
+        const LocalTensorView<half> &tmp_ub,
         uint32_t m, uint32_t n_real, uint32_t n_stride)
     {
         if (n_real >= VECTOR_SIZE) {
@@ -411,9 +397,9 @@ struct Rowmax<half, RowCalcTile::TAIL_TILE>{
 template<>
 struct Rowsum<float, RowCalcTile::SPEC_TILE_512>{
     __aicore__ __attribute__((always_inline)) inline Rowsum(
-        const AscendC::LocalTensor<float> &src_ub,
-        const AscendC::LocalTensor<float> &rowsum_ub,
-        const AscendC::LocalTensor<float> &tmp_ub,
+        const LocalTensorView<float> &src_ub,
+        const LocalTensorView<float> &rowsum_ub,
+        const LocalTensorView<float> &tmp_ub,
         uint32_t num_rows_round , uint32_t num_elems, uint32_t num_elems_aligned)
     {
         cgadd_v<ArchType::ASCEND_V220, float>(
@@ -449,9 +435,9 @@ struct Rowsum<float, RowCalcTile::SPEC_TILE_512>{
 template<>
 struct Rowsum<float, RowCalcTile::SPEC_TILE_256>{
     __aicore__ __attribute__((always_inline)) inline Rowsum(
-        const AscendC::LocalTensor<float> &src_ub,
-        const AscendC::LocalTensor<float> &rowsum_ub,
-        const AscendC::LocalTensor<float> &tmp_ub,
+        const LocalTensorView<float> &src_ub,
+        const LocalTensorView<float> &rowsum_ub,
+        const LocalTensorView<float> &tmp_ub,
         uint32_t num_rows_round, uint32_t num_elems, uint32_t num_elems_aligned)
     {
         cgadd_v<ArchType::ASCEND_V220, float>(
@@ -490,9 +476,9 @@ struct Rowsum<float, RowCalcTile::SPEC_TILE_256>{
 template<>
 struct Rowsum<float, RowCalcTile::TAIL_TILE>{
     __aicore__ __attribute__((always_inline)) inline Rowsum(
-        const AscendC::LocalTensor<float> &src_ub,
-        const AscendC::LocalTensor<float> &rowsum_ub,
-        const AscendC::LocalTensor<float> &tmp_ub,
+        const LocalTensorView<float> &src_ub,
+        const LocalTensorView<float> &rowsum_ub,
+        const LocalTensorView<float> &tmp_ub,
         uint32_t num_rows_round, uint32_t num_elems, uint32_t num_elems_aligned)
     {
         if (num_elems >= FLOAT_VECTOR_SIZE) {
@@ -605,9 +591,9 @@ struct Rowsum<float, RowCalcTile::TAIL_TILE>{
 template<>
 struct Rowmax<float, RowCalcTile::SPEC_TILE_512> {
     __aicore__ __attribute__((always_inline)) inline Rowmax(
-        const AscendC::LocalTensor<float> &src_ub,
-        const AscendC::LocalTensor<float> &rowmax_ub,
-        const AscendC::LocalTensor<float> &tmp_ub,
+        const LocalTensorView<float> &src_ub,
+        const LocalTensorView<float> &rowmax_ub,
+        const LocalTensorView<float> &tmp_ub,
         uint32_t num_rows_round, uint32_t num_elems, uint32_t num_elems_aligned)
     {
         cgmax_v<ArchType::ASCEND_V220, float>(
@@ -643,9 +629,9 @@ struct Rowmax<float, RowCalcTile::SPEC_TILE_512> {
 template<>
 struct Rowmax<float, RowCalcTile::SPEC_TILE_256>{
     __aicore__ __attribute__((always_inline)) inline Rowmax(
-        const AscendC::LocalTensor<float> &src_ub,
-        const AscendC::LocalTensor<float> &rowmax_ub,
-        const AscendC::LocalTensor<float> &tmp_ub,
+        const LocalTensorView<float> &src_ub,
+        const LocalTensorView<float> &rowmax_ub,
+        const LocalTensorView<float> &tmp_ub,
         uint32_t num_rows_round, uint32_t num_elems, uint32_t num_elems_aligned)
     {
         cgmax_v<ArchType::ASCEND_V220, float>(
@@ -684,9 +670,9 @@ struct Rowmax<float, RowCalcTile::SPEC_TILE_256>{
 template<>
 struct Rowmax<float, RowCalcTile::TAIL_TILE>{
     __aicore__ __attribute__((always_inline)) inline Rowmax(
-        const AscendC::LocalTensor<float> &src_ub,
-        const AscendC::LocalTensor<float> &rowmax_ub,
-        const AscendC::LocalTensor<float> &tmp_ub,
+        const LocalTensorView<float> &src_ub,
+        const LocalTensorView<float> &rowmax_ub,
+        const LocalTensorView<float> &tmp_ub,
         uint32_t num_rows_round, uint32_t num_elems, uint32_t num_elems_aligned)
     {
         if (num_elems >= FLOAT_VECTOR_SIZE) {
@@ -799,14 +785,14 @@ struct Rowmax<float, RowCalcTile::TAIL_TILE>{
 template<MaskType MASK_TYPE = MaskType::MASK_TYPE_NONE>
 struct OnlineSoftmaxStage1Step1 {
      __aicore__ __attribute__((always_inline)) inline OnlineSoftmaxStage1Step1(
-    const AscendC::LocalTensor<float> &s_ub,
-    const AscendC::LocalTensor<float> &local_rowmax_ub,
-    const AscendC::LocalTensor<float> &hat_rowmax_ub,
-    const AscendC::LocalTensor<float> &global_rowmax_ub,
-    const AscendC::LocalTensor<float> &diff_rowmax_ub,
-    const AscendC::LocalTensor<float> &s_exp_ub,
-    const AscendC::LocalTensor<float> &local_rowsum_ub,
-    const AscendC::LocalTensor<float> &tmp_ub,
+    const LocalTensorView<float> &s_ub,
+    const LocalTensorView<float> &local_rowmax_ub,
+    const LocalTensorView<float> &hat_rowmax_ub,
+    const LocalTensorView<float> &global_rowmax_ub,
+    const LocalTensorView<float> &diff_rowmax_ub,
+    const LocalTensorView<float> &s_exp_ub,
+    const LocalTensorView<float> &local_rowsum_ub,
+    const LocalTensorView<float> &tmp_ub,
     bool first_n_iter, float tor,
     uint32_t m, uint32_t n_real, uint32_t n_stride)
 {
@@ -978,15 +964,15 @@ struct OnlineSoftmaxStage1Step1 {
 template<>
 struct OnlineSoftmaxStage1Step1<MaskType::MASK_TYPE_CAUSAL_MASK>{
     __aicore__ __attribute__((always_inline)) inline OnlineSoftmaxStage1Step1(
-    const AscendC::LocalTensor<float> &s_ub,
-    const AscendC::LocalTensor<float> &mask_ub_tensor,
-    const AscendC::LocalTensor<float> &local_rowmax_ub,
-    const AscendC::LocalTensor<float> &hat_rowmax_ub,
-    const AscendC::LocalTensor<float> &global_rowmax_ub,
-    const AscendC::LocalTensor<float> &diff_rowmax_ub,
-    const AscendC::LocalTensor<float> &s_exp_ub,
-    const AscendC::LocalTensor<float> &local_rowsum_ub,
-    const AscendC::LocalTensor<float> &tmp_ub,
+    const LocalTensorView<float> &s_ub,
+    const LocalTensorView<float> &mask_ub_tensor,
+    const LocalTensorView<float> &local_rowmax_ub,
+    const LocalTensorView<float> &hat_rowmax_ub,
+    const LocalTensorView<float> &global_rowmax_ub,
+    const LocalTensorView<float> &diff_rowmax_ub,
+    const LocalTensorView<float> &s_exp_ub,
+    const LocalTensorView<float> &local_rowsum_ub,
+    const LocalTensorView<float> &tmp_ub,
     bool first_n_iter, float tor, float mask_coff,
     uint32_t m, uint32_t n_real, uint32_t n_stride, uint32_t pp_n_scalar,
     bool need_mask, uint32_t slice_row_offset, uint32_t sub_m1)
@@ -1233,9 +1219,9 @@ struct OnlineSoftmaxStage1Step1<MaskType::MASK_TYPE_CAUSAL_MASK>{
 };
 
 __aicore__ __attribute__((always_inline)) inline void OnlineSoftmaxStage1Step2(
-    const AscendC::LocalTensor<float> &local_rowsum_ub,
-    const AscendC::LocalTensor<float> &global_rowsum_ub,
-    const AscendC::LocalTensor<float> &diff_rowmax_ub,
+    const LocalTensorView<float> &local_rowsum_ub,
+    const LocalTensorView<float> &global_rowsum_ub,
+    const LocalTensorView<float> &diff_rowmax_ub,
     bool first_n_iter,
     uint32_t m
 )
@@ -1283,18 +1269,18 @@ __aicore__ __attribute__((always_inline)) inline void OnlineSoftmaxStage1Step2(
 template<typename P_DTYPE, typename MASK_DTYPE>
 struct OnlineSoftmaxStage1<float, float, P_DTYPE, MASK_DTYPE, MaskType::MASK_TYPE_NONE> {
     __aicore__ __attribute__((always_inline)) inline OnlineSoftmaxStage1(
-        const AscendC::LocalTensor<float> &s_ub,
-        const AscendC::LocalTensor<MASK_DTYPE> &mask_orig_ub,
-        const AscendC::LocalTensor<float> &mask_processed_ub,
-        const AscendC::LocalTensor<float> &local_rowmax_ub,
-        const AscendC::LocalTensor<float> &hat_rowmax_ub,
-        const AscendC::LocalTensor<float> &global_rowmax_ub,
-        const AscendC::LocalTensor<float> &diff_rowmax_ub,
-        const AscendC::LocalTensor<float> &s_exp_ub,
-        const AscendC::LocalTensor<float> &local_rowsum_ub,
-        const AscendC::LocalTensor<float> &global_rowsum_ub,
-        const AscendC::LocalTensor<P_DTYPE> &p_ub,
-        const AscendC::LocalTensor<float> &tmp_ub,
+        const LocalTensorView<float> &s_ub,
+        const LocalTensorView<MASK_DTYPE> &mask_orig_ub,
+        const LocalTensorView<float> &mask_processed_ub,
+        const LocalTensorView<float> &local_rowmax_ub,
+        const LocalTensorView<float> &hat_rowmax_ub,
+        const LocalTensorView<float> &global_rowmax_ub,
+        const LocalTensorView<float> &diff_rowmax_ub,
+        const LocalTensorView<float> &s_exp_ub,
+        const LocalTensorView<float> &local_rowsum_ub,
+        const LocalTensorView<float> &global_rowsum_ub,
+        const LocalTensorView<P_DTYPE> &p_ub,
+        const LocalTensorView<float> &tmp_ub,
         __gm__ float *s_gm,
         __gm__ P_DTYPE *p_gm,
         bool first_n_iter, float tor,
@@ -1347,17 +1333,17 @@ struct OnlineSoftmaxStage1<float, float, P_DTYPE, MASK_DTYPE, MaskType::MASK_TYP
 template <typename P_DTYPE, typename MASK_DTYPE>
 struct OnlineSoftmaxStage1<float, float, P_DTYPE, MASK_DTYPE, MaskType::MASK_TYPE_CAUSAL_MASK> {
     __aicore__ __attribute__((always_inline)) inline OnlineSoftmaxStage1(
-        const AscendC::LocalTensor<float> &s_ub,
-        const AscendC::LocalTensor<float> &mask_processed_ub,
-        const AscendC::LocalTensor<float> &local_rowmax_ub,
-        const AscendC::LocalTensor<float> &hat_rowmax_ub,
-        const AscendC::LocalTensor<float> &global_rowmax_ub,
-        const AscendC::LocalTensor<float> &diff_rowmax_ub,
-        const AscendC::LocalTensor<float> &s_exp_ub,
-        const AscendC::LocalTensor<float> &local_rowsum_ub,
-        const AscendC::LocalTensor<float> &global_rowsum_ub,
-        const AscendC::LocalTensor<P_DTYPE> &p_ub,
-        const AscendC::LocalTensor<float> &tmp_ub,
+        const LocalTensorView<float> &s_ub,
+        const LocalTensorView<float> &mask_processed_ub,
+        const LocalTensorView<float> &local_rowmax_ub,
+        const LocalTensorView<float> &hat_rowmax_ub,
+        const LocalTensorView<float> &global_rowmax_ub,
+        const LocalTensorView<float> &diff_rowmax_ub,
+        const LocalTensorView<float> &s_exp_ub,
+        const LocalTensorView<float> &local_rowsum_ub,
+        const LocalTensorView<float> &global_rowsum_ub,
+        const LocalTensorView<P_DTYPE> &p_ub,
+        const LocalTensorView<float> &tmp_ub,
         __gm__ float *s_gm,
         __gm__ P_DTYPE *p_gm,
         bool first_n_iter, float tor, float mask_coff,

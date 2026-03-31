@@ -17,8 +17,8 @@ constexpr uint32_t DUP_REPEAT_SIZE = 256;
 // vcgadd
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void cgadd_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                               __ubuf__ AscendC::PrimT<DType>* src,
+__aicore__ inline void cgadd_v(__ubuf__ DType* dst,
+                               __ubuf__ DType* src,
                                const int32_t repeat,
                                const int32_t dstRepStride,
                                const int32_t srcBlkStride,
@@ -31,9 +31,9 @@ __aicore__ inline void cgadd_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vadd
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void add_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                             __ubuf__ AscendC::PrimT<DType>* src0,
-                             __ubuf__ AscendC::PrimT<DType>* src1,
+__aicore__ inline void add_v(__ubuf__ DType* dst,
+                             __ubuf__ DType* src0,
+                             __ubuf__ DType* src1,
                              uint8_t repeat,
                              uint8_t dstBlockStride,
                              uint8_t src0BlockStride,
@@ -50,8 +50,8 @@ __aicore__ inline void add_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vadds
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void adds_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                              __ubuf__ AscendC::PrimT<DType>* src,
+__aicore__ inline void adds_v(__ubuf__ DType* dst,
+                              __ubuf__ DType* src,
                               DType scalarValue,
                               uint8_t repeat,
                               uint8_t dstBlockStride,
@@ -67,8 +67,8 @@ __aicore__ inline void adds_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vcadd
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void cadd_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                              __ubuf__ AscendC::PrimT<DType>* src,
+__aicore__ inline void cadd_v(__ubuf__ DType* dst,
+                              __ubuf__ DType* src,
                               uint8_t repeat,
                               uint16_t dstRepeatStride,
                               uint16_t srcBlockStride,
@@ -80,8 +80,8 @@ __aicore__ inline void cadd_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vbrcb
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void brcb_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                              __ubuf__ AscendC::PrimT<DType>* src,
+__aicore__ inline void brcb_v(__ubuf__ DType* dst,
+                              __ubuf__ DType* src,
                               uint16_t dstBlockStride,
                               uint16_t dstRepeatStride,
                               uint8_t repeat)
@@ -96,9 +96,9 @@ __aicore__ inline void brcb_v(__ubuf__ AscendC::PrimT<DType>* dst,
 /////////////////////////////////////////////////////
 // vcmax
 /////////////////////////////////////////////////////
-template <ArchType ArchTag, typename DType, AscendC::ReduceOrder OrderType>
-__aicore__ inline void cmax_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                              __ubuf__ AscendC::PrimT<DType>* src,
+template <ArchType ArchTag, typename DType, Order_t OrderType>
+__aicore__ inline void cmax_v(__ubuf__ DType* dst,
+                              __ubuf__ DType* src,
                               uint8_t repeat,
                               uint16_t dstRepeatStride,
                               uint16_t srcBlockStride,
@@ -121,8 +121,8 @@ __aicore__ inline void cmax_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vconv
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DTypeIn, typename DTypeOut>
-__aicore__ inline void conv_v(__ubuf__ AscendC::PrimT<DTypeOut>* dst,
-                              __ubuf__ AscendC::PrimT<DTypeIn>* src,
+__aicore__ inline void conv_v(__ubuf__ DTypeOut* dst,
+                              __ubuf__ DTypeIn* src,
                               uint8_t repeat,
                               uint16_t dstBlockStride,
                               uint16_t srcBlockStride,
@@ -170,8 +170,8 @@ __aicore__ inline void conv_v(__ubuf__ AscendC::PrimT<DTypeOut>* dst,
 // vconv_f322bf16r
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DTypeIn, typename DTypeOut>
-__aicore__ inline void convr_v(__ubuf__ AscendC::PrimT<DTypeOut>* dst,
-                               __ubuf__ AscendC::PrimT<DTypeIn>* src,
+__aicore__ inline void convr_v(__ubuf__ DTypeOut* dst,
+                               __ubuf__ DTypeIn* src,
                                uint8_t repeat,
                                uint16_t dstBlockStride,
                                uint16_t srcBlockStride,
@@ -203,9 +203,9 @@ __aicore__ inline void convr_v(__ubuf__ AscendC::PrimT<DTypeOut>* dst,
 // vdiv
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void div_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                             __ubuf__ AscendC::PrimT<DType>* src0,
-                             __ubuf__ AscendC::PrimT<DType>* src1,
+__aicore__ inline void div_v(__ubuf__ DType* dst,
+                             __ubuf__ DType* src0,
+                             __ubuf__ DType* src1,
                              uint8_t repeat,
                              uint8_t dstBlockStride,
                              uint8_t src0BlockStride,
@@ -222,8 +222,8 @@ __aicore__ inline void div_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vexp
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void exp_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                             __ubuf__ AscendC::PrimT<DType>* src,
+__aicore__ inline void exp_v(__ubuf__ DType* dst,
+                             __ubuf__ DType* src,
                              uint8_t repeat,
                              uint16_t dstBlockStride,
                              uint16_t srcBlockStride,
@@ -237,9 +237,9 @@ __aicore__ inline void exp_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vmax
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void max_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                             __ubuf__ AscendC::PrimT<DType>* src0,
-                             __ubuf__ AscendC::PrimT<DType>* src1,
+__aicore__ inline void max_v(__ubuf__ DType* dst,
+                             __ubuf__ DType* src0,
+                             __ubuf__ DType* src1,
                              uint8_t repeat,
                              uint8_t dstBlockStride,
                              uint8_t src0BlockStride,
@@ -256,9 +256,9 @@ __aicore__ inline void max_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vmul
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void mul_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                             __ubuf__ AscendC::PrimT<DType>* src0,
-                             __ubuf__ AscendC::PrimT<DType>* src1,
+__aicore__ inline void mul_v(__ubuf__ DType* dst,
+                             __ubuf__ DType* src0,
+                             __ubuf__ DType* src1,
                              uint8_t repeat,
                              uint8_t dstBlockStride,
                              uint8_t src0BlockStride,
@@ -275,8 +275,8 @@ __aicore__ inline void mul_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vmuls
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void muls_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                              __ubuf__ AscendC::PrimT<DType>* src0,
+__aicore__ inline void muls_v(__ubuf__ DType* dst,
+                              __ubuf__ DType* src0,
                               DType src1,
                               uint8_t repeat,
                               uint16_t dstBlockStride,
@@ -291,9 +291,9 @@ __aicore__ inline void muls_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vsub
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void sub_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                             __ubuf__ AscendC::PrimT<DType>* src0,
-                             __ubuf__ AscendC::PrimT<DType>* src1,
+__aicore__ inline void sub_v(__ubuf__ DType* dst,
+                             __ubuf__ DType* src0,
+                             __ubuf__ DType* src1,
                              uint8_t repeat,
                              uint8_t dstBlockStride,
                              uint8_t src0BlockStride,
@@ -310,8 +310,8 @@ __aicore__ inline void sub_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vmaxs
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void maxs_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                              __ubuf__ AscendC::PrimT<DType>* src0,
+__aicore__ inline void maxs_v(__ubuf__ DType* dst,
+                              __ubuf__ DType* src0,
                               DType src1,
                               uint8_t repeat,
                               uint16_t dstBlockStride,
@@ -326,8 +326,8 @@ __aicore__ inline void maxs_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vmins
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void mins_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                              __ubuf__ AscendC::PrimT<DType>* src0,
+__aicore__ inline void mins_v(__ubuf__ DType* dst,
+                              __ubuf__ DType* src0,
                               DType src1,
                               uint8_t repeat,
                               uint16_t dstBlockStride,
@@ -342,8 +342,8 @@ __aicore__ inline void mins_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vsqrt
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void sqrt_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                              __ubuf__ AscendC::PrimT<DType>* src,
+__aicore__ inline void sqrt_v(__ubuf__ DType* dst,
+                              __ubuf__ DType* src,
                               uint8_t repeat,
                               uint16_t dstBlockStride,
                               uint16_t srcBlockStride,
@@ -357,8 +357,8 @@ __aicore__ inline void sqrt_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vln
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void ln_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                            __ubuf__ AscendC::PrimT<DType>* src,
+__aicore__ inline void ln_v(__ubuf__ DType* dst,
+                            __ubuf__ DType* src,
                             uint8_t repeat,
                             uint16_t dstBlockStride,
                             uint16_t srcBlockStride,
@@ -372,7 +372,7 @@ __aicore__ inline void ln_v(__ubuf__ AscendC::PrimT<DType>* dst,
 // vtranspose
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void tranpose_v(__ubuf__ AscendC::PrimT<DType>* dst, __ubuf__ AscendC::PrimT<DType>* src)
+__aicore__ inline void tranpose_v(__ubuf__ DType* dst, __ubuf__ DType* src)
 {
     vtranspose(dst, src);
 }
@@ -381,8 +381,8 @@ __aicore__ inline void tranpose_v(__ubuf__ AscendC::PrimT<DType>* dst, __ubuf__ 
 // vcgmax
 /////////////////////////////////////////////////////
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void cgmax_v(__ubuf__ AscendC::PrimT<DType>* dst,
-                               __ubuf__ AscendC::PrimT<DType>* src,
+__aicore__ inline void cgmax_v(__ubuf__ DType* dst,
+                               __ubuf__ DType* src,
                                const int32_t repeat,
                                const int32_t dstRepStride,
                                const int32_t srcBlkStride,
@@ -392,7 +392,7 @@ __aicore__ inline void cgmax_v(__ubuf__ AscendC::PrimT<DType>* dst,
 }
 
 template <ArchType ArchTag, typename DType>
-__aicore__ inline void dup_v(__ubuf__ AscendC::PrimT<DType>* dst,
+__aicore__ inline void dup_v(__ubuf__ DType* dst,
                              DType src1,
                              const int32_t repeat)
 {
@@ -406,9 +406,9 @@ __aicore__ inline void dup_v(__ubuf__ AscendC::PrimT<DType>* dst,
 }
 
 template <typename DType, typename TLike>
-__aicore__ inline __ubuf__ AscendC::PrimT<DType>* ub_addr(const TLike& t)
+__aicore__ inline __ubuf__ DType* ub_addr(const TLike& t)
 {
-    return (__ubuf__ AscendC::PrimT<DType>*)t.GetPhyAddr();
+    return (__ubuf__ DType*)t.GetPhyAddr();
 }
 
 template <ArchType A, typename T, typename D, typename S>
@@ -436,7 +436,7 @@ __aicore__ inline void brcb_v(const D& dst, const S& src, uint16_t dbs, uint16_t
 {
     brcb_v<A, T>(ub_addr<T>(dst), ub_addr<T>(src), dbs, drs, r);
 }
-template <ArchType A, typename T, AscendC::ReduceOrder O, typename D, typename S>
+template <ArchType A, typename T, Order_t O, typename D, typename S>
 __aicore__ inline void cmax_v(const D& dst, const S& src, uint8_t r, uint16_t drs, uint16_t sbs, uint16_t srs)
 {
     cmax_v<A, T, O>(ub_addr<T>(dst), ub_addr<T>(src), r, drs, sbs, srs);
