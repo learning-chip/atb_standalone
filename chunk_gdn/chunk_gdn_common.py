@@ -71,7 +71,9 @@ def tiling_to_device(tiling: ChunkGatedDeltaRuleTilingData, device: str) -> torc
 
 def ai_core_num_from_device() -> int:
     try:
-        cube_core_num = int(getattr(torch.npu.get_device_properties("npu"), "cube_core_num", 24))
+        cube_core_num = int(
+            getattr(torch.npu.get_device_properties(torch.npu.current_device()), "cube_core_num", 24)
+        )
     except Exception:
         cube_core_num = 24
     return max(1, cube_core_num // 3)

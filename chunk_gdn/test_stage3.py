@@ -83,7 +83,7 @@ def run_case(device: str) -> None:
     lib1.call_stage1.argtypes = [ctypes.c_uint32, ctypes.c_void_p] + [ctypes.c_void_p] * 13
     lib1.call_stage1.restype = None
     lib1.call_stage1(
-        ai_core_num * 2,
+        ai_core_num,
         torch.npu.current_stream()._as_parameter_,
         as_ptr(query),
         as_ptr(key),
@@ -110,7 +110,7 @@ def run_case(device: str) -> None:
     lib2.call_stage2.argtypes = [ctypes.c_uint32, ctypes.c_void_p] + [ctypes.c_void_p] * 8
     lib2.call_stage2.restype = None
     lib2.call_stage2(
-        ai_core_num * 2,
+        ai_core_num,
         torch.npu.current_stream()._as_parameter_,
         as_ptr(q_prime),
         as_ptr(v_inner),
@@ -132,7 +132,7 @@ def run_case(device: str) -> None:
     lib3.call_stage3.argtypes = [ctypes.c_uint32, ctypes.c_void_p] + [ctypes.c_void_p] * 8
     lib3.call_stage3.restype = None
     lib3.call_stage3(
-        ai_core_num * 2,
+        ai_core_num,
         torch.npu.current_stream()._as_parameter_,
         as_ptr(qkt),
         as_ptr(g_cum_exp),

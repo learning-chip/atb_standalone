@@ -450,8 +450,10 @@ def build_tiling_and_workspace(
     mm.Kb = baseK
     mm.usedCoreNum = ai_core_num
 
-    # Heuristic single-core shapes: split M across cores, keep N/K intact.
-    mm.singleCoreM = (baseM + ai_core_num - 1) // ai_core_num
+    # Per-core M/N/K must match the working Stage1/2/3 standalone tiling
+    # (`default_matmul_tiling` in chunk_gdn_common): splitting M across cores here
+    # breaks StageOneMT / StageTwoMT / StageThreeMT Init and can fault at runtime.
+    mm.singleCoreM = baseM
     mm.singleCoreN = baseN
     mm.singleCoreK = baseK
 
@@ -603,10 +605,12 @@ if __name__ == "__main__":
     torch.npu.set_device(device)
 
     try:
-        cube_core_num = int(torch.npu.get_device_properties("npu").cube_core_num)
+        cube_core_num = int(
+            torch.npu.get_device_properties(torch.npu.current_device()).cube_core_num
+        )
     except Exception:
         cube_core_num = 24
-    ai_core_num = cube_core_num // 3
+    ai_core_num = max(1, cube_core_num // 3)
 
     lib = ctypes.CDLL(lib_path)
     lib.call_kernel.argtypes = [

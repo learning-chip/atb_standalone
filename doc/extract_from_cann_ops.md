@@ -61,7 +61,7 @@ Kernels using **`CrossCoreWaitFlag` / `CrossCoreSetFlag`** need a valid sync bas
 - **Host**: `rtGetC2cCtrlAddr` (from runtime) to get the control address.
 - **Device** (start of kernel): `SetSyncBaseAddr((unsigned long)fftsAddr)`, often plus `SetAtomicNone()`, `SetMaskNorm()`.
 
-**Block dimensions**: mix-mode kernels may require **`blockDim = ai_core_num * 2`** (or whatever matches `KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2)` and your chip’s cube/AIC-AIV pairing). Too small a `blockDim` can yield **partial execution** or wrong `GetBlockIdx()` mapping—validate with a tiny “meta” kernel that prints or writes `GetBlockIdx`, `GetSubBlockIdx`, etc., if needed.
+**Block dimensions**: for the mix kernel (`KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2)`), use **`blockDim = ai_core_num`** (one block per AI core). Wrong `blockDim` can yield **partial execution** or odd `GetBlockIdx()` mapping—validate with a tiny “meta” kernel if needed.
 
 ---
 

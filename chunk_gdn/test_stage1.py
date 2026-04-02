@@ -92,7 +92,7 @@ def run_case(device: str) -> None:
     lib.call_stage1.restype = None
 
     lib.call_stage1(
-        ai_core_num * 2,
+        ai_core_num,
         torch.npu.current_stream()._as_parameter_,
         as_ptr(query),
         as_ptr(key),

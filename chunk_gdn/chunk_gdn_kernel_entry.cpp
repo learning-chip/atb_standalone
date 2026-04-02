@@ -5,13 +5,18 @@ using namespace matmul;
 using namespace ChunkGatedDeltaRule;
 
 extern "C" __global__ __aicore__ void chunk_gated_delta_rule(
+    GM_ADDR fftsAddr,
     GM_ADDR query, GM_ADDR key, GM_ADDR value, GM_ADDR beta, GM_ADDR initialState, GM_ADDR seqlens, GM_ADDR gOptional,
     GM_ADDR out, GM_ADDR finalState, GM_ADDR workspaceGM, GM_ADDR tilingGM)
 {
+    // Stage1/2/3 use CrossCoreWaitFlag; align with staged `stage*_kernel` entry points.
+    SetSyncBaseAddr((unsigned long)fftsAddr);
+    SetAtomicNone();
+    SetMaskNorm();
+
     REGISTER_TILING_DEFAULT(ChunkGatedDeltaRuleTilingData);
     GET_TILING_DATA(tilingData, tilingGM);
-    // Standalone debug path: force vector-core execution only.
-    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
     TPipe pipe;
 
     __gm__ uint8_t *user = GetUserWorkspace(workspaceGM);
