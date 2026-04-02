@@ -192,7 +192,7 @@ def chunk_gated_delta_rule_npu(
     initial_state: torch.Tensor = None,
     cu_seqlens=None,
 ):
-    # Mirrors ops-transformer golden logic, but runs entirely via Torch ops.
+    # Mirrors upstream golden logic, but runs entirely via Torch ops.
     num_heads = q.shape[-2]
     num_value_heads = v.shape[-2]
 
@@ -626,7 +626,7 @@ if __name__ == "__main__":
     ]
     lib.call_kernel.restype = None
 
-    # Mirrors ops-transformer pytest paramset (but we only run correctness, not performance).
+    # Mirrors upstream pytest paramset (but we only run correctness, not performance).
     test_params = [
         (1, 64, 4, 4, 128, 128, 64),
         (1, 16384, 4, 4, 128, 128, 64),

@@ -9,7 +9,7 @@ bash ./compile.sh
 python ./test_chunk_gdn.py
 ```
 
-## Staged probes (real Stage1 / Stage2 / Stage3 from `ops-transformer`)
+## Staged probes (real Stage1 / Stage2 / Stage3; sources under `op_kernel/`)
 
 Each stage is a small `.so` plus a Python test. Stage2 and Stage3 tests chain after Stage1.
 

@@ -1,6 +1,6 @@
 // Shim header for standalone build.
 //
-// ops-transformer kernel sources include `kernel_vec_intf.h` as an umbrella header,
+// These kernel sources include `kernel_vec_intf.h` as an umbrella header,
 // but CANN provides the actual vector operator interfaces under `basic_api/`.
 //
 // For simplicity, include the generic kernel operator interface, which pulls in

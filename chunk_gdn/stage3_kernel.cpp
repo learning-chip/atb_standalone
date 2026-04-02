@@ -1,7 +1,7 @@
 // Standalone Stage3 wrapper: real `Stage3` from chunk_gated_delta_rule_stage3.h
 #include "kernel_operator.h"
 #include "lib/matmul_intf.h"
-#include "../../ops-transformer/attention/chunk_gated_delta_rule/op_kernel/chunk_gated_delta_rule_stage3.h"
+#include "chunk_gated_delta_rule_stage3.h"
 #include "runtime/rt.h"
 
 using namespace AscendC;

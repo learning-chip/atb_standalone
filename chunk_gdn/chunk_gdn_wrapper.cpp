@@ -1,7 +1,7 @@
 // Standalone wrapper to launch `chunk_gated_delta_rule` via ctypes.
 //
 // This file intentionally includes only the required kernel source
-// (not the full ops-transformer build system).
+// (vendored under op_kernel/, plus local shims).
 
 #include <stdint.h>
 

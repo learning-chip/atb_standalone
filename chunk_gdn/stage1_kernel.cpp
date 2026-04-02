@@ -1,5 +1,5 @@
-// Standalone Stage1 wrapper: real `Stage1` from ops-transformer (see chunk_gated_delta_rule_stage1.h).
-#include "../../ops-transformer/attention/chunk_gated_delta_rule/op_kernel/chunk_gated_delta_rule.h"
+// Standalone Stage1 wrapper: real `Stage1` (see op_kernel/chunk_gated_delta_rule_stage1.h).
+#include "chunk_gated_delta_rule.h"
 #include "runtime/rt.h"
 
 using namespace AscendC;

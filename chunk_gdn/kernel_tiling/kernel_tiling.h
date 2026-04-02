@@ -1,6 +1,6 @@
 // Shim header for standalone build.
 //
-// The ops-transformer kernel sources include `kernel_tiling/kernel_tiling.h`,
+// These kernel sources include `kernel_tiling/kernel_tiling.h`,
 // but this header is not present in CANN 8.5.0 at the expected path.
 //
 // We re-export CANN's `adv_api/kernel_tiling.h` and provide the minimal

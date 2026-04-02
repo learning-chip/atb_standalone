@@ -1,5 +1,4 @@
-#include "../../ops-transformer/attention/chunk_gated_delta_rule/op_kernel/chunk_gated_delta_rule.h"
-#include "../../ops-transformer/attention/chunk_gated_delta_rule/op_kernel/chunk_gated_delta_rule_tiling_data.h"
+#include "chunk_gated_delta_rule.h"
 
 using namespace AscendC;
 using namespace matmul;

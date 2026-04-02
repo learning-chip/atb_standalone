@@ -9,9 +9,11 @@
 // Standalone CPU tiling generator for `chunk_gated_delta_rule`.
 // It mirrors the relevant parts of `op_host/chunk_gated_delta_rule_tiling.cpp`,
 // especially `DoMatmulTiling()` which fills `matmulTilingFp32` using CANN.
+//
+// Build: add `-I<path/to/chunk_gdn>/op_kernel` so `chunk_gated_delta_rule_tiling_data.h` resolves.
 
 #include "adv_api/matmul/bmm_tiling.h"
-#include "../../ops-transformer/attention/chunk_gated_delta_rule/op_kernel/chunk_gated_delta_rule_tiling_data.h"
+#include "chunk_gated_delta_rule_tiling_data.h"
 
 #include "tiling/platform/platform_ascendc.h"
 
