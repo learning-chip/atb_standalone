@@ -151,7 +151,7 @@ def ai_core_num_from_device() -> int:
         )
     except Exception:
         cube_core_num = 24
-    return max(1, cube_core_num // 3)
+    return max(1, cube_core_num)
 
 
 def stage1_workspace_bytes(ai_core_num: int, chunk: int, dk: int, dv: int) -> int:
