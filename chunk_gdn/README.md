@@ -82,6 +82,7 @@ Takeaways:
 - Increasing `nk=nv` from `4` to `16-64` is the strongest lever for device utilization on the working stage kernels.
 - Larger host-side batch replay (`B=8/32/128`) does **not** help as much as increasing heads; repeated small per-sequence launches reduce effective utilization.
 - On this host, the stable high-throughput region is still `dk=dv=64`, `chunk=64`.
+- A native single-launch `B>1` flattening experiment (`B=8, S=2048, nk=nv=16, dk=dv=64, chunk=64`) was about `12%` faster than repeated launches (`3.63 ms` vs `4.11 ms` for the full Stage1->2->3 chain), but it was incorrect because the standalone Stage2 / Stage3 wrappers only carry one recurrent state tensor and therefore do not reset state at batch boundaries.
 
 ## Notes
 
@@ -90,4 +91,5 @@ Takeaways:
 - `stage2_kernel.cpp` and `stage3_kernel.cpp` now propagate `tilingData.hasGamma`, which fixes the gamma-enabled all-stage benchmark path.
 - `test_chunk_gdn.py` validates the staged custom path against the bf16 torch reference with relaxed max/mean-abs thresholds that match the observed cast error envelope of the standalone staged kernels.
 - The broader stage sweep showed that `dk=dv=128` and `chunk=128` still fault on this 910B2 / CANN stack, so they are not included in the measured matrix above.
+- The standalone Stage1 wrapper can consume a larger flattened `T=B*S`, but the standalone Stage2 / Stage3 wrappers are still effectively single-sequence kernels: they accept one `curState` tensor and use `ChunkGroup(startPos=0, length=t)`, so true native multi-batch timing is not currently a correct benchmark path.
 - The legacy monolithic `chunk_gdn_lib.so` source is still present in the tree for debugging, but the supported benchmark/test path is the staged custom pipeline built by `compile.sh`.

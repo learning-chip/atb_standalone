@@ -6,8 +6,9 @@ For each benchmark case:
 - then time Stage1 / Stage2 / Stage3 in isolation
 
 For `B > 1`, the stage benchmark replays the same per-sequence launch `B` times per timed
-iteration. This preserves batch semantics for throughput accounting while using the same
-correctly-working per-stage kernels.
+iteration. This is intentional: the standalone Stage2 / Stage3 wrappers do not natively model
+multiple independent batch states in a single launch, so flattening `B x S` into one larger
+sequence is faster but breaks correctness across batch boundaries.
 """
 
 from __future__ import annotations
