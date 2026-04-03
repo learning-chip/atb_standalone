@@ -29,13 +29,13 @@ if _HERE not in sys.path:
 
 from chunk_gdn_common import (
     ai_core_num_from_device,
+    ChunkGatedDeltaRuleTilingData,
     default_matmul_tiling,
     stage1_workspace_bytes,
     stage3_workspace_bytes,
     tiling_to_device,
     as_ptr,
 )
-from test_chunk_gdn import ChunkGatedDeltaRuleTilingData
 
 LIB1 = os.path.join(_HERE, "stage1_lib.so")
 LIB2 = os.path.join(_HERE, "stage2_lib.so")
@@ -96,15 +96,14 @@ def run_benchmarks() -> None:
 
     ai_core_num = ai_core_num_from_device()
 
-    # Staged tests use nk=nv=1, dk=dv=64, chunk=64; vary sequence length T.
+    # Larger gamma-enabled shapes give more representative throughput than tiny probes.
     cases = [
-        {"name": "s1_t64", "T": 64},
-        {"name": "s1_t512", "T": 512},
-        {"name": "s1_t2048", "T": 2048},
         {"name": "s1_t4096", "T": 4096},
+        {"name": "s1_t16384", "T": 16384},
+        {"name": "s1_t65536", "T": 65536},
     ]
 
-    B, nk, nv, dk, dv, chunk = 1, 1, 1, 64, 64, 64
+    B, nk, nv, dk, dv, chunk = 1, 4, 4, 64, 64, 64
     matmul_dim = 64
 
     lib1 = ctypes.CDLL(LIB1)
@@ -136,7 +135,7 @@ def run_benchmarks() -> None:
         tiling.nv = nv
         tiling.dv = dv
         tiling.b = B
-        tiling.hasGamma = 0
+        tiling.hasGamma = 1
         tiling.chunkSize = chunk
         tiling.maxGroupLength = T
         tiling.stageOneParaNum = 2
@@ -152,7 +151,8 @@ def run_benchmarks() -> None:
         query = F.normalize(query, p=2, dim=-1)
         key = F.normalize(key, p=2, dim=-1)
         value = torch.randn((T, nv, dv), dtype=torch.bfloat16, device=device).contiguous()
-        beta = torch.ones((T, nv), dtype=torch.bfloat16, device=device).contiguous()
+        beta = torch.rand((T, nv), dtype=torch.bfloat16, device=device).contiguous()
+        gamma = (torch.rand((T, nv), dtype=torch.float32, device=device) * -1.0).contiguous()
 
         stage_one_mask = torch.zeros((mask_elems,), dtype=torch.float32, device=device).contiguous()
         tri = torch.tril(torch.ones((chunk, chunk), dtype=torch.float32, device=device))
@@ -174,6 +174,7 @@ def run_benchmarks() -> None:
             + nbytes(key)
             + nbytes(value)
             + nbytes(beta)
+            + nbytes(gamma)
             + nbytes(stage_one_mask)
             + nbytes(qkt)
             + nbytes(g_cum_exp)
@@ -193,7 +194,7 @@ def run_benchmarks() -> None:
                 as_ptr(key),
                 as_ptr(value),
                 as_ptr(beta),
-                ctypes.c_void_p(0),
+                as_ptr(gamma),
                 as_ptr(stage_one_mask),
                 as_ptr(qkt),
                 as_ptr(g_cum_exp),
@@ -229,7 +230,7 @@ def run_benchmarks() -> None:
             as_ptr(key),
             as_ptr(value),
             as_ptr(beta),
-            ctypes.c_void_p(0),
+            as_ptr(gamma),
             as_ptr(stage_one_mask),
             as_ptr(qkt),
             as_ptr(g_cum_exp),

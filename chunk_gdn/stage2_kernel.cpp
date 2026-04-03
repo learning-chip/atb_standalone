@@ -56,7 +56,7 @@ extern "C" __global__ __aicore__ void stage2_kernel(
     StageTwoParams params{
         qPrimeGm, vInnerGm, gCumExpGm, kCumDecayGm, curStateGm, kgGm,
         attnInterGm, workspaceGM, &mm, &pipe, &cg,
-        tilingData.nv, tilingData.nk, tilingData.dv, tilingData.dk, false};
+        tilingData.nv, tilingData.nk, tilingData.dv, tilingData.dk, tilingData.hasGamma != 0};
 
     Stage2 op;
     op.Init(&params, static_cast<int32_t>(tilingData.aiCoreNum));

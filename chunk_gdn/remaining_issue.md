@@ -27,7 +27,7 @@ So: **per-stage custom kernels are fine; the combined (e2e) fused entry is not s
 ## Concrete next steps
 
 1. Reproduce with **`ASCEND_LAUNCH_BLOCKING=1`** and **`ASCEND_GLOBAL_LOG_LEVEL=1`** (or your site’s ACL debug flags); capture **device plog** around the fault.
-2. Confirm **`python test_chunk_gdn.py`** on a **clean** NPU after **`npu-smi`** reset / new process; if only fused fails, bisect by **temporarily** linking a fused entry that calls **only `RunStage1`** then **`RunStage2`** then **`RunStage3`** in sequence (same as Python chain) to see whether **fusion in one kernel** vs **tiling** is at fault.
+2. Confirm **`python test_chunk_gdn.py`** runs correctly; if only fused fails, bisect by **temporarily** linking a fused entry that calls **only `RunStage1`** then **`RunStage2`** then **`RunStage3`** in sequence (same as Python chain) to see whether **fusion in one kernel** vs **tiling** is at fault.
 3. Compare **`.o` size** and **kernel metadata** between **`chunk_gdn_lib.so`** and **`stage1_lib.so`** (e.g. `nm`, vendor tools).
 4. When e2e passes, re-run **`benchmark_chunk_gdn.py`** without **`--torch-ref-only`** and refresh **`README.md`** / **`pr.md`** custom-kernel rows.
 

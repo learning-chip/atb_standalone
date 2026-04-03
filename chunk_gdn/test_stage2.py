@@ -18,12 +18,12 @@ if _HERE not in sys.path:
 from chunk_gdn_common import (
     ai_core_num_from_device,
     check_close,
+    ChunkGatedDeltaRuleTilingData,
     default_matmul_tiling,
     stage1_workspace_bytes,
     tiling_to_device,
     as_ptr,
 )
-from test_chunk_gdn import ChunkGatedDeltaRuleTilingData
 
 LIB1 = os.path.join(_HERE, "stage1_lib.so")
 LIB2 = os.path.join(_HERE, "stage2_lib.so")

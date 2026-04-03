@@ -108,3 +108,7 @@ This isolates tiling, FFTS, and numerical issues faster than a single monolithic
 3. Staged tests pass, then full-kernel test against torch golden.
 
 This order saves time: link/include errors first, then sync/scheduling, then numerical tuning.
+
+## 12. Find free NPU devices
+
+Command `npu-smi info` prints out the usage of current NPUs. Avoid using NPUs that are being used by other processes. Switch to a free device using, for example, `torch.npu.set_device("npu:7")` (assume NPU:7 is free).

@@ -68,7 +68,7 @@ extern "C" __global__ __aicore__ void stage3_kernel(
         tilingData.nk,
         tilingData.dv,
         tilingData.dk,
-        false};
+        tilingData.hasGamma != 0};
 
     Stage3 op;
     op.Init(&params, static_cast<int32_t>(tilingData.aiCoreNum));
