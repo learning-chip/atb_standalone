@@ -1,3 +1,4 @@
-Standalone hackable refactoring of gitcode.com/cann/ascend-transformer-boost
-
-Benchmark snapshots (e.g. chunk gated delta rule): see `chunk_gdn/README.md` § Measured performance.
+Standalone hackable refactoring of 
+- https://gitcode.com/cann/ascend-transformer-boost
+- https://gitcode.com/cann/ops-transformer (especially `attention` directory)
+- https://gitcode.com/cann/ops-nn
