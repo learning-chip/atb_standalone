@@ -353,15 +353,19 @@ def run_benchmarks():
             "q_seq": 1,
             "kv_seq": 2048,
         },
-        {"name": "prefill_b4_h16_s256", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 256, "kv_seq": 256},
         {"name": "prefill_b4_h16_s512", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 512, "kv_seq": 512},
         {"name": "prefill_b4_h16_s768", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 768, "kv_seq": 768},
         {"name": "prefill_b4_h16_s1024", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 1024, "kv_seq": 1024},
+        {"name": "prefill_b4_h16_s2048", "batch": 4, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 2048, "kv_seq": 2048},
         {"name": "prefill_b8_h16_s768", "batch": 8, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 768, "kv_seq": 768},
+        {"name": "prefill_b8_h16_s1024", "batch": 8, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 1024, "kv_seq": 1024},
         {"name": "prefill_b8_h32_s512", "batch": 8, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 512, "kv_seq": 512},
         {"name": "prefill_b8_h32_s768", "batch": 8, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 768, "kv_seq": 768},
+        {"name": "prefill_b8_h32_s1024", "batch": 8, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 1024, "kv_seq": 1024},
         {"name": "prefill_b16_h16_s512", "batch": 16, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 512, "kv_seq": 512},
-        {"name": "prefill_b16_h32_s256", "batch": 16, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 256, "kv_seq": 256},
+        {"name": "prefill_b16_h16_s1024", "batch": 16, "heads": 16, "kv_heads": 16, "embd": 192, "embdv": 128, "q_seq": 1024, "kv_seq": 1024},
+        {"name": "prefill_b16_h32_s768", "batch": 16, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 768, "kv_seq": 768},
+        {"name": "prefill_b16_h32_s1024", "batch": 16, "heads": 32, "kv_heads": 32, "embd": 192, "embdv": 128, "q_seq": 1024, "kv_seq": 1024},
     ]
     error_warn_threshold = 1.0e-2
     results = []
