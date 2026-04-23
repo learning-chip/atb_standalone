@@ -314,6 +314,7 @@ constexpr uint32_t EMBED_SPLIT = 256;
 constexpr uint32_t ROUND_EMBED_SPLIT = 256;
 
 #elif __DAV_C220_VEC__
+#include "pa_gqa_pto_tile_helpers.hpp"
 constexpr uint32_t HALF_VECTOR_SIZE = 128;
 constexpr uint32_t UB_ALIGN_BYTE = 32;
 constexpr int32_t FLOAT_VECTOR_SIZE = 64;
@@ -850,17 +851,9 @@ private:
             set_flag(PIPE_MTE1, PIPE_M, l0_pingpong_flag);
             wait_flag(PIPE_MTE1, PIPE_M, l0_pingpong_flag);
             wait_flag(PIPE_FIX, PIPE_M, l0_pingpong_flag);
-            mad(
-                mm1_l0c_buf_tensor + (l0c_offset),
-                l0a_buf_tensor + (l0_offset),
-                l0b_buf_tensor + (mad_l0b_offset),
-                m,
-                __k,
-                qk_n,
-                0,
-                false,
-                false,
-                1);
+            pa_pto::tmatmul_fp32acc<IN_DTYPE>(mm1_l0c_buf_tensor + (l0c_offset), l0a_buf_tensor + (l0_offset),
+                l0b_buf_tensor + (mad_l0b_offset), static_cast<uint16_t>(m), static_cast<uint16_t>(__k),
+                static_cast<uint16_t>(qk_n));
             if (is_l0b_pingpong_off) {
                 set_flag(PIPE_M, PIPE_MTE1, l0b_pingpong_flag + 2);
             } else {
@@ -1058,17 +1051,9 @@ private:
             set_flag(PIPE_MTE1, PIPE_M, l0_pingpong_flag);
             wait_flag(PIPE_MTE1, PIPE_M, l0_pingpong_flag);
             wait_flag(PIPE_FIX, PIPE_M, l0_pingpong_flag);
-            mad(
-                mm2_l0c_buf_tensor + (l0c_offset),
-                l0a_buf_tensor + (l0_offset),
-                l0b_buf_tensor + (mad_l0b_offset),
-                m,
-                qk_n,
-                __k,
-                0,
-                false,
-                false,
-                1);
+            pa_pto::tmatmul_fp32acc<IN_DTYPE>(mm2_l0c_buf_tensor + (l0c_offset), l0a_buf_tensor + (l0_offset),
+                l0b_buf_tensor + (mad_l0b_offset), static_cast<uint16_t>(m), static_cast<uint16_t>(qk_n),
+                static_cast<uint16_t>(__k));
 
             if (is_l0b_pingpong_off) {
                 set_flag(PIPE_M, PIPE_MTE1, l0b_pingpong_flag + 2);

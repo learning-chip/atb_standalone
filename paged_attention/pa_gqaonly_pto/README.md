@@ -23,9 +23,7 @@ python3 ./bench_pa_performance.py --device 7 --warmup 5 --iters 20
 
 ## PTO port status
 
-The numerical implementation still lives in AscendC (`kernel/pa_kernel.cce`) for full tiling and cube/vector split fidelity. PTO-ISA is **on the include path** and included on the **cube** translation unit via `kernel/pa_gqa_pto_tile_helpers.hpp` so new code can call `pto::TLOAD`, `pto::TMATMUL`, etc., alongside existing intrinsics during migration.
-
-See **`PORT_PROGRESS.md`** for intrinsic→PTO mapping, test results, and the staged plan to replace `mad` / `copy_*` / `vadd` with PTO APIs.
+Most of the kernel remains AscendC for tiling and MTE paths. PTO-ISA is on the include path via `kernel/pa_gqa_pto_tile_helpers.hpp` on **both** cube and vector translation units. **Cube QK and PV matmul** already go through `pa_pto::tmatmul_fp32acc` (`pto::TMatmul`, with a GEMV-style path when `m==1`). Data movement (`copy_gm_to_cbuf`, L1→L0 loads) and vector softmax still use AscendC intrinsics; see **`PORT_PROGRESS.md`** for the mapping and remaining steps.
 
 ## References
 
